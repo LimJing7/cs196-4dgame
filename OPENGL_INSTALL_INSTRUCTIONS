@@ -1,0 +1,198 @@
+OPENGL LIBRARIES AND HEADER FILES INSTALLATION INSTRUCTIONS
+Benjamin Lim
+
+For this project, we will be building and installing a number of libraries and
+header files, namely, GLFW, GLEW, SOIL2 and GLM.
+
+All this information is available on the learnopengl.com tutorial as well as
+spread out through the various documentation pages of the libraries, but I'll
+try and collate it here for everyone's convenience.
+
+This guide is written for Linux and OS X. I don't have a Mac, so I hope it
+works on your computers.
+
+We build everything from source just to make sure that it is compatible with
+your system. 
+
+===================
+System Requirements
+===================
+It would be best for your system to support at least the OpenGL
+3.3 specification, so that you can follow the tutorial without issue. To test
+this:
+
+Linux (debian-based):
+---------------------
+Before running anything, make sure your repositories, packages and system are
+up to date by running "sudo apt-get update; sudo apt-get upgrade; sudo apt-get
+dist-upgrade".
+
+Following that, run:
+$ sudo apt-get install mesa-utils
+$ glxinfo | grep OpenGL
+
+The output should hopefully have a line saying something like "OpenGL core
+profile version string: 3.3 (Core Profile) Mesa 10.1.3" or something to that
+effect. As long as the core profile is supported and version >= 3.3 you're
+good to go. Most modern graphics cards should support at least this version.
+If you don't get this or can't interpret the output, then tell me.
+
+OS X:
+-----
+You should be able to check your OpenGL support by looking up the correct
+version on this website: https://support.apple.com/en-us/HT202823
+
+You may need to update your graphics drivers but it is usually not necessary.
+
+============
+System Setup
+============
+You will need to install several tools in order to compile the folders, namely,
+Git, Subversion, Mercurial, and Premake. At the very least, you will need Git
+and a Github account.
+
+You will also need cmake and possibly doxygen as well.
+
+I recommend clang++ as the compiler for the project (made in UIUC). You can 
+build clang from source if you wish but that would take about 1+ hrs. 
+
+Linux:
+------
+$ sudo apt-get install clang
+$ sudo apt-get install libc++         (this might possibly have errors, but nvm)
+$ sudo apt-get install libc++1 libc++-dev libc++abi1 libc++abi-dev
+$ sudo apt-get install git subversion premake4 mercurial
+$ sudo apt-get install cmake doxygen
+$ sudo apt-get install make           (this is normally preinstalled)
+
+OS X:
+-----
+I'm not entirely sure about this, but I believe clang/clang++ and the header
+files normally come bundled with OS X. Make sure that you have 'make' 
+installed as well. The other things are kind of optional.
+
+XCode come bundled with some of the libraries, it is probably best if you have
+it.
+
+I'm not sure if cmake comes with XCode, you might need to use homebrew or
+something to get it installed. Doxygen is available at
+http://www.stack.nl/~dimitri/doxygen/download.html
+
+BOTH:
+-----
+I would recommend Sublime Text or vim as an editor. If you do use XCode or any
+other IDE please commit only the source files and not the project
+configuration files. The instructions here are for compiling without an IDE,
+mostly on linux, if you do have one you can extrapolate from them.
+
+Once everything is installed, go to your home directory (run "cd") and create
+a new directory called 'opengl' (run "mkdir opengl"). Then, create the folders
+lib, include and pc in the opengl folder. (run "cd opengl;mkdir lib include 
+pc") 
+
+This is where we will be placing the OpenGL libs, so that you do not mess with
+the ones on your computer. You are free to put them anywhere else, but you 
+will have to edit the Makefile that I will be providing. If you do so, please
+try not to commit your Makefile to the repository. The following instructions 
+will also assume that opengl is in ~/opengl.
+
+================================
+Installing Development Libraries
+================================
+
+We will be installing GLFW, GLEW, SOIL2 and GLM. In the following you can
+also just download the source packages instead of using version control tools
+to pull the code, but I recommend it.
+
+===============
+Installing GLFW
+===============
+GLFW abstracts away system APIs like windowing calls.
+
+The source code of GLFW is available at https://github.com/glfw/glfw
+Find a directory to clone the source code into, and cd to that directory.
+Full documentation is here: http://www.glfw.org/docs/latest/compile.html
+Run the following:
+
+Linux:
+------
+$ sudo apt-get install xorg-dev libglu1-mesa-dev
+
+OSX:
+----
+The required dependencies should come installed with OSX.
+
+BOTH:
+-----
+After the dependencies have been installed, run the following:
+$ git clone https://github.com/glfw/glfw.git glfw
+$ cd glfw
+$ cmake . 
+$ make
+$ cmake -DBUILD_SHARED_LIBS=ON .
+$ make
+$ cp --no-dereference src/libglfw* ~/opengl/lib/
+$ cp src/*.pc ~/opengl/pc/
+$ cp --recursive include/GLFW/ ~/opengl/include/
+$ cd ..
+
+===============
+Installing GLEW
+===============
+GLEW abstracts away checking for OpenGL functionality that is supported by the
+graphics card, and helps load those extensions.
+
+The source code of GLEW is available at https://github.com/nigels-com/glew
+This installation requires wget and perl. If you don't have them, install them.
+Full documentation is here: http://glew.sourceforge.net/index.html
+Run the following:
+
+Both:
+-----
+$ git clone https://github.com/nigels-com/glew.git glew
+$ cd glew/auto
+$ make
+$ cd ..
+$ make
+$ cp --no-dereference lib/* ~/opengl/lib/
+$ cp *.pc ~/opengl/pc/
+$ cp --recursive include/GL/ ~/opengl/include/
+$ cd ..
+
+================
+Installing SOIL2
+================
+SOIL2 is a library for loading image files that can be used by OpenGL.
+
+The source code and documentation is available at
+https://bitbucket.org/SpartanJ/soil2
+
+Both:
+-----
+$ hg clone https://bitbucket.org/SpartanJ/soil2 soil2
+$ cd soil2
+$ premake4 gmake
+$ cd make/*YOUR_PLATFORM_HERE*/
+$ make config=release         (there will be some errors, just ignore)
+$ cd ../../lib/linux
+$ cp libsoil2.a ~/opengl/lib/
+$ cd ../../src/SOIL2
+$ cp SOIL2.h ~/opengl/include/
+$ cd ../../..
+
+==============
+Installing GLM
+==============
+GLM is a Mathematics library for OpenGL. It is a header only library, so no
+real installation or compilation is needed.
+
+Documentation and code available at: http://glm.g-truc.net/0.9.7/index.html
+
+Both:
+-----
+$ git clone https://github.com/g-truc/glm.git glm
+$ cd glm
+$ cp --recursive glm/ ~/opengl/include/
+
+
+Aaaand you're done! (for now)
