@@ -69,14 +69,14 @@ OS X:
 -----
 I'm not entirely sure about this, but I believe clang/clang++ and the header
 files normally come bundled with OS X. Make sure that you have 'make' 
-installed as well. The other things are kind of optional.
+installed as well. The other things are kind of optional, but you can install
+most of them with brew.
 
-XCode come bundled with some of the libraries, it is probably best if you have
-it.
+XCode come bundled with some of the libraries, I believe you need to install it
+even if you don't intend to use XCode.
 
-I'm not sure if cmake comes with XCode, you might need to use homebrew or
-something to get it installed. Doxygen is available at
-http://www.stack.nl/~dimitri/doxygen/download.html
+Doxygen is available at http://www.stack.nl/~dimitri/doxygen/download.html if
+it is not on brew.
 
 BOTH:
 -----
@@ -131,9 +131,9 @@ $ cmake .
 $ make
 $ cmake -DBUILD_SHARED_LIBS=ON .
 $ make
-$ cp --no-dereference src/libglfw* ~/opengl/lib/
+$ cp -R -P src/libglfw* ~/opengl/lib/
 $ cp src/*.pc ~/opengl/pc/
-$ cp --recursive include/GLFW/ ~/opengl/include/
+$ cp -R include/GLFW/ ~/opengl/include/
 $ cd ..
 
 ===============
@@ -154,9 +154,9 @@ $ cd glew/auto
 $ make
 $ cd ..
 $ make
-$ cp --no-dereference lib/* ~/opengl/lib/
+$ cp -R -P lib/* ~/opengl/lib/
 $ cp *.pc ~/opengl/pc/
-$ cp --recursive include/GL/ ~/opengl/include/
+$ cp -R include/GL/ ~/opengl/include/
 $ cd ..
 
 ================
@@ -174,7 +174,7 @@ $ cd soil2
 $ premake4 gmake
 $ cd make/*YOUR_PLATFORM_HERE*/
 $ make config=release         (there will be some errors, just ignore)
-$ cd ../../lib/linux
+$ cd ../../lib/*YOUR_PLATFORM_HERE*/
 $ cp libsoil2.a ~/opengl/lib/
 $ cd ../../src/SOIL2
 $ cp SOIL2.h ~/opengl/include/
@@ -192,7 +192,7 @@ Both:
 -----
 $ git clone https://github.com/g-truc/glm.git glm
 $ cd glm
-$ cp --recursive glm/ ~/opengl/include/
+$ cp -R glm/ ~/opengl/include/
 
 
 Aaaand you're done! (for now)

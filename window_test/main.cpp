@@ -1,10 +1,17 @@
 #include <iostream>
 
 // GLEW
+// A little bit of hacking here to get my autocomplete to work
 #ifdef CLANG_COMPLETE_ONLY
     #define GL_GLEXT_PROTOTYPES
+#ifdef __LINUXOS__
     #include <GL/gl.h>
     #include <GL/glext.h>
+#endif
+#ifdef __APPLEOS__
+    #include <OpenGL/gl.h>
+    #include <OpenGL/glext.h>
+#endif
 #else
     #define GLEW_STATIC
     #include <GL/glew.h>
@@ -12,7 +19,6 @@
 
 // GLFW
 #include <GLFW/glfw3.h>
-
 
 // Function prototypes
 void key_callback(GLFWwindow* window, int key, int scancode, int action,
@@ -31,6 +37,10 @@ int main()
     // Set all the required options for GLFW
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    // OS X requests 3.3 differently.
+#ifdef __APPLEOS__
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+#endif
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
 
@@ -49,6 +59,7 @@ int main()
 
     // Set this to true so GLEW knows to use a modern approach to retrieving
     // function pointers and extensions
+    // More hacking for my autocomplete.
 #ifndef CLANG_COMPLETE_ONLY
     glewExperimental = GL_TRUE;
     // Initialize GLEW to setup the OpenGL Function pointers
