@@ -1,4 +1,7 @@
+#include "shader.h"
+
 #include <iostream>
+#include <cmath>
 
 // GLEW
 // A little bit of hacking here to get my autocomplete to work
@@ -75,58 +78,8 @@ int main()
 
     // ---------- BEGIN OPENGL ----------- //
     
-    // Shader source
-    const char *vertexShaderSource =
-        "#version 330 core\n"
-        "layout(location = 0) in vec3 position;\n"
-        "void main() {\n"
-        "gl_Position = vec4(position.x, position.y, position.z, 1.0f);}";
-
-    const char *fragmentShaderSource =
-        "#version 330 core\n"
-        "out vec4 color;\n"
-        "void main() {\n"
-        "color = vec4(1.0f, 0.5f, 0.2f, 1.0f);}";
-
     // Shader creation
-    GLuint vertexShader;
-    vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-    glCompileShader(vertexShader);
-    
-    GLint success;
-    GLchar infoLog[512];
-    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-    if (!success) {
-        glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-        std::cout << "Error: Shader: Vertex: COMPILATION FAILED\n" << infoLog << std::endl;
-    }
-
-    GLuint fragmentShader;
-    fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
-    glCompileShader(fragmentShader);
-
-    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-    if (!success) {
-        glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
-        std::cout << "Error: Shader: Fragment: COMPILATION FAILED\n" << infoLog << std::endl;
-    }
-
-    GLuint shaderProgram;
-    shaderProgram = glCreateProgram();
-    glAttachShader(shaderProgram, vertexShader);
-    glAttachShader(shaderProgram, fragmentShader);
-    glLinkProgram(shaderProgram);
-
-    glGetShaderiv(vertexShader, GL_LINK_STATUS,  &success);
-    if (!success) {
-        glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
-        std::cout << "Error: Shader: Program: LINKING FAILED\n" << infoLog << std::endl;
-    }
-
-    glDeleteShader(vertexShader);
-    glDeleteShader(fragmentShader);
+    Shader simpleShader("vertex_simple.glsl", "fragment_uniforms.glsl");
 
     // Data
     GLfloat vertices[] = {
@@ -137,8 +90,8 @@ int main()
     };
 
     GLuint indices[] = {
-        0,  1,  3,
-        1,  2,  3
+        0,  1,  3
+        //1,  2,  3
     };
 
     // Set up buffer stuff
@@ -152,8 +105,10 @@ int main()
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_TRUE, 3*sizeof(GL_FLOAT), (GLvoid*)0);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, 
+                 GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_TRUE, 3*sizeof(GL_FLOAT), 
+                          (GLvoid*)0);
     glEnableVertexAttribArray(0);
     glBindVertexArray(0); // We're done, unbind
 
@@ -169,12 +124,16 @@ int main()
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        // Draw
-        glUseProgram(shaderProgram);
+        // Draw, update uniform color
+        GLfloat timeValue = glfwGetTime();
+        GLfloat greenValue = (sin(timeValue)/2) + 0.5f;
+        GLint vertexColorLocation = glGetUniformLocation(simpleShader.Program, "ourColor");
+        simpleShader.Use();
+        glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f);
         // Wireframe mode
         //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         glBindVertexArray(VAO);
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
 
         // Swap the screen buffers
