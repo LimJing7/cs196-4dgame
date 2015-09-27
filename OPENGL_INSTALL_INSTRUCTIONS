@@ -133,7 +133,11 @@ $ cmake -DBUILD_SHARED_LIBS=ON .
 $ make
 $ cp -R -P src/libglfw* ~/opengl/lib/
 $ cp src/*.pc ~/opengl/pc/
+<<<<<<< HEAD
 $ cp -R include/GLFW/ ~/opengl/include/
+=======
+$ cp -R include/GLFW/ ~/opengl/include/GLFW/
+>>>>>>> upstream/master
 $ cd ..
 
 ===============
@@ -156,7 +160,11 @@ $ cd ..
 $ make
 $ cp -R -P lib/* ~/opengl/lib/
 $ cp *.pc ~/opengl/pc/
+<<<<<<< HEAD
 $ cp -R include/GL/ ~/opengl/include/
+=======
+$ cp -R include/GL/ ~/opengl/include/GL/
+>>>>>>> upstream/master
 $ cd ..
 
 ================
@@ -192,7 +200,11 @@ Both:
 -----
 $ git clone https://github.com/g-truc/glm.git glm
 $ cd glm
+<<<<<<< HEAD
 $ cp -R glm/ ~/opengl/include/
+=======
+$ cp -R glm/ ~/opengl/include/glm/
+>>>>>>> upstream/master
 
 
 Aaaand you're done! (for now)
