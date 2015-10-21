@@ -1,0 +1,380 @@
+#include <iostream>
+#include <set>
+#include <tuple>
+#include <vector>
+#include "shader.h"
+
+#define GLEW_STATIC
+#include <GL/glew.h>
+#include <GLFW/glfw3.h>
+#include <SOIL2.h>
+
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
+class comVec3 {
+  public:
+    glm::vec3 content;
+    comVec3 (glm::vec3);
+    bool operator< (const comVec3& r) const;
+    inline bool operator> (const comVec3& r) const;
+    inline bool operator>=(const comVec3& r) const;
+    inline bool operator<=(const comVec3& r) const;
+
+};
+
+std::vector<comVec3> lin_interpolation_l2p(glm::vec4 start_ver, glm::vec4 end_ver, float w);
+std::vector<comVec3> lin_interpolation_t2l(glm::vec4 a, glm::vec4 b, glm::vec4 c, float w);
+
+//size is the number of triangles for each 3d object, number is the number of 3d objects
+std::vector<comVec3> lin_interpolation_c2t(glm::vec4 vertices[], int size, int number, float w);
+
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode);
+
+//GLOBALS
+// Window dimensions
+const GLuint WIDTH = 600, HEIGHT = 600;
+
+// framerate
+GLfloat deltaTime = 0.0f;	// Time between current frame and last frame
+GLfloat lastFrame = 0.0f;  	// Time of last frame
+
+
+int main(){
+
+    // Data
+    GLfloat vertices[] = {
+        // Positions           
+         0.5f,   0.5f,   0.5f,   0.5f,
+         0.5f,  -0.5f,   0.5f,   0.5f,  
+        -0.5f,  -0.5f,   0.5f,   0.5f,
+        -0.5f,   0.5f,   0.5f,   0.5f,
+         0.5f,   0.5f,  -0.5f,   0.5f,
+         0.5f,  -0.5f,  -0.5f,   0.5f,
+        -0.5f,  -0.5f,  -0.5f,   0.5f,
+        -0.5f,   0.5f,  -0.5f,   0.5f,
+         0.5f,   0.5f,   0.5f,  -0.5f,
+         0.5f,  -0.5f,   0.5f,  -0.5f,  
+        -0.5f,  -0.5f,   0.5f,  -0.5f,
+        -0.5f,   0.5f,   0.5f,  -0.5f,
+         0.5f,   0.5f,  -0.5f,  -0.5f,
+         0.5f,  -0.5f,  -0.5f,  -0.5f,
+        -0.5f,  -0.5f,  -0.5f,  -0.5f,
+        -0.5f,   0.5f,  -0.5f,  -0.5f
+    };
+
+    /* vertices order
+    ftr, fbr, fbl,
+    ftr, fbl, ftl,
+    btr, ftr, ftl,
+    btr, ftl, btl,
+    btr, bbr, fbr,
+    btr, fbr, ftr,
+    ftl, fbl, bbl,
+    ftl, bbl, btl,
+    fbr, bbr, bbl,
+    fbr, bbl, fbl,
+    btl, bbl, bbr,
+    btl, bbr, btr,
+    */
+
+    GLuint indices[] = {
+        // Near Cube
+         0,  1,  2,
+         0,  2,  3,
+         4,  0,  3,
+         4,  3,  7,
+         4,  5,  1,
+         4,  1,  0,
+         3,  2,  6,
+         3,  6,  7,
+         1,  5,  6,
+         1,  6,  2,
+         7,  6,  5,
+         7,  5,  4,
+
+        // Far Cube
+         8,  9, 10,
+         8, 10, 11,
+        12,  8, 11,
+        12, 11, 15,
+        12, 13,  9,
+        12,  9,  8,
+        11, 10, 14,
+        11, 14, 15,
+         9, 13, 14,
+         9, 14, 10,
+        15, 14, 13,
+        15, 13, 12,
+
+        // Front Cube
+         0,  1,  2,
+         0,  2,  3,
+         8,  0,  3,
+         8,  3, 11,
+         8,  9,  1,
+         8,  1,  0,
+         3,  2, 10,
+         3, 10, 11,
+         1,  9, 10,
+         1, 10,  2,
+        11, 10,  9,
+        11,  9,  8,
+
+        //Back Cube
+        12, 13, 14,
+        12, 14, 15,
+         4, 12, 15,
+         4, 15,  7,
+         4,  5, 13,
+         4, 13, 12,
+        15, 14,  6,
+        15,  6,  7,
+        13,  5,  6,
+        13,  6, 14,
+         7,  6,  5,
+         7,  5,  4,
+
+        // Top Cube
+         0,  8, 11,
+         0, 11,  3,
+         4,  0,  3,
+         4,  3,  7,
+         4, 12,  8,
+         4,  8,  0,
+         3, 11, 15,
+         3, 15,  7,
+         8, 12, 15,
+         8, 15, 11,
+         7, 15, 12,
+         7, 12,  4,
+
+        // Bottom Cube
+         9,  1,  2,
+         9,  2, 10,
+        13,  9, 10,
+        13, 10, 14,
+        13,  5,  1,
+        13,  1,  9,
+        10,  2,  6,
+        10,  6, 14,
+         1,  5,  6,
+         1,  6,  2,
+        14,  6,  5,
+        14,  5, 13,
+
+        // Left Cube
+        11, 10,  2,
+        11,  2,  3,
+        15, 11,  3,
+        15,  3,  7,
+        15, 14, 10,
+        15, 10, 11,
+         3,  2,  6,
+         3,  6,  7,
+        10, 14,  6,
+        10,  6,  2,
+         7,  6, 14,
+         7, 14, 15,
+
+        // Right Cube
+         0,  1,  9,
+         0,  9,  8,
+         4,  0,  8,
+         4,  8, 12,
+         4,  5,  1,
+         4,  1,  0,
+         8,  9, 13,
+         8, 13, 12,
+         1,  5, 13,
+         1, 13,  9,
+        12, 13,  5,
+        12,  5,  4
+    };
+    
+    GLuint lines[] = {
+         0,  1,
+         1,  2,
+         2,  3,
+         3,  0,
+         3,  7,
+         7,  4,
+         4,  0,
+         4,  5,
+         5,  1,
+         5,  6,
+         6,  2,
+         7,  6,
+         8, 11,
+        11, 15,
+        15, 12,
+        12,  8,
+         8,  9,
+         9, 10,
+        10, 11,
+        12, 13,
+        13,  9,
+        10, 14,
+        14, 13,
+        14, 15,
+         0,  8,
+         1,  9,
+         2, 10,
+         3, 11,
+         4, 12,
+         5, 13,
+         6, 14,
+         7, 15
+    };
+    
+    //setup window
+    glfwInit();
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
+
+    GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "3D Slice", nullptr, nullptr);
+    int Width, Height;
+    glfwGetWindowSize(window, &Width, &Height);
+    glfwMakeContextCurrent(window);
+
+    if (window == nullptr){
+        std::cout << "Failed to create GLFW window" << std::endl;
+        glfwTerminate();
+        return -1;
+    }
+    glewExperimental = GL_TRUE;
+    
+    if (glewInit() != GLEW_OK) {
+        std::cout << "Failed to initialize GLEW" << std::endl;
+        return -1;
+    }
+
+ 
+    glViewport(0, 0, Width, Height);    
+
+    glfwSetKeyCallback(window, key_callback);
+
+
+
+    /*glm::vec4 start = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
+    glm::vec4 end   = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+    glm::vec3 test  = lin_interpolation(start, end, 0.5);
+    std::cout<<test.x<<test.y<<test.z<<std::endl;*/
+
+    std::set<comVec3> vertices_to_draw;
+    std::set<comVec3>::iterator it;
+    
+    /*for (int i=0; i<64; i+=2){
+        glm::vec4 startvec = glm::vec4(vertices[lines[i]*4], vertices[lines[i]*4+1], vertices[lines[i]*4+2], vertices[lines[i]*4+3]);
+        glm::vec4 endvec = glm::vec4(vertices[lines[i+1]*4], vertices[lines[i+1]*4+1], vertices[lines[i+1]*4+2], vertices[lines[i+1]*4+3]);
+        float w=0.0;
+        std::vector<comVec3> points = lin_interpolation_l2p(startvec, endvec, w);
+        vertices_to_draw.insert(points.begin(), points.end());
+    }*/
+
+    for (int i=0; i<288; i+=3){
+        float w=0.0;
+        glm::vec4 a = glm::vec4(vertices[indices[i]*4]);
+        glm::vec4 b = glm::vec4(vertices[indices[i]*4+1]);
+        glm::vec4 c = glm::vec4(vertices[indices[i]*4+2]);
+        std::vector<comVec3> points = lin_interpolation_t2l(a,b,c,w);
+    }
+    
+    std::cout<<"Vertices:"<<std::endl;
+    for (it=vertices_to_draw.begin(); it!=vertices_to_draw.end(); it++){
+        //std::cout<<"hello";
+        std::cout<<" "<<(*it).content.x<<" "<<(*it).content.y<<" "<<(*it).content.z<<std::endl;
+    }
+
+    //main loop
+    while(!glfwWindowShouldClose(window)) {
+        GLfloat currentFrame = glfwGetTime();
+        deltaTime = currentFrame - lastFrame;
+        lastFrame = currentFrame; 
+
+        glfwPollEvents();
+        glfwSwapBuffers(window);
+    }
+    /*
+    glDeleteVertexArrays(1, &VAO);
+    glDeleteBuffers(1, &VBO);
+    glDeleteBuffers(1, &EBO);    */
+    glfwTerminate();
+    return 0;
+}
+
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode){
+    // When a user presses the escape key, we set the WindowShouldClose property to true, 
+    // closing the application
+    if(key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+        glfwSetWindowShouldClose(window, GL_TRUE);
+    if(key == GLFW_KEY_SPACE && action == GLFW_PRESS)
+        glfwSetWindowShouldClose(window, GL_TRUE); 
+}
+
+std::vector<comVec3> lin_interpolation_l2p(glm::vec4 start_ver, glm::vec4 end_ver, float w){
+    std::vector<comVec3> points;
+    std::vector<comVec3>::iterator it;
+    
+    if ((w>start_ver.w && w<end_ver.w) || (w<start_ver.w && w>end_ver.w)){
+        float rel = (w-start_ver.w)/(end_ver.w-start_ver.w);
+        points.insert(it, comVec3(glm::vec3( (end_ver.x - start_ver.x)*rel+start_ver.x, 
+                                              (end_ver.y - start_ver.y)*rel+start_ver.y, 
+                                              (end_ver.z - start_ver.z)*rel+start_ver.z) ));
+    }
+    if (start_ver.w == w) points.insert(it, comVec3(glm::vec3(start_ver)));
+    if (end_ver.w == w) points.insert(it, comVec3(glm::vec3(end_ver)));
+    return points;
+}
+
+std::vector<comVec3> lin_interpolation_t2l(glm::vec4 a, glm::vec4 b, glm::vec4 c, float w){
+    bool flag = false;
+    
+    std::vector<comVec3> points;
+    std::vector<comVec3>::iterator it;
+    it=points.begin();
+    
+    //2 points returned -> a line is drawn
+    std::vector<comVec3> pt1 = lin_interpolation_l2p(a, b, w);
+    std::cout<<pt1.size()<<" ";
+    if (flag) points.insert(it, pt1.begin(), pt1.end());
+    std::vector<comVec3> pt2 = lin_interpolation_l2p(a, c, w);
+    std::cout<<pt2.size()<<" ";
+    if (flag) points.insert(it, pt2.begin(), pt2.end());
+    std::vector<comVec3> pt3 = lin_interpolation_l2p(b, c, w);
+    std::cout<<pt3.size()<<std::endl;
+    if (flag) points.insert(it, pt3.begin(), pt3.end());
+    
+    return points;
+}
+
+std::vector<comVec3> lin_interpolation_c2t(glm::vec4 vertices[], int size, int number, float w){
+    
+    std::vector<comVec3> points;
+    std::vector<comVec3>::iterator it;
+    
+    std::set<comVec3> vertices_to_draw;
+    std::set<comVec3>::iterator it;
+    
+    for (int i=0; i<number; i+=size){
+        for (int j=0; j<size; j++){
+            std::vector<comVec3> line1 = lin_interpolation_t2l(vertices[i*size+j], vertices[i*size+j+1], vertices[i*size+j+2], w);
+        }
+    }
+
+}
+
+
+
+comVec3::comVec3(glm::vec3 value){
+    content=value;
+}
+bool comVec3::operator< (const comVec3& r) const{
+    return std::tie(content.x, content.y, content.z)
+         < std::tie(r.content.x, r.content.y, r.content.z);}
+bool comVec3::operator> (const comVec3& r) const{ return r<*this; }
+bool comVec3::operator>=(const comVec3& r) const{ return !(*this<r); }
+bool comVec3::operator<=(const comVec3& r) const{ return !(*this>r); };
