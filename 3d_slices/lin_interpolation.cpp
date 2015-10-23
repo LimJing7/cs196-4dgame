@@ -59,14 +59,20 @@ std::vector<comVec3> lin_interpolation_c2t(GLuint indices[], GLfloat vertices[],
         std::vector<comVec3>::iterator lit;
         std::cout<<line.size()<<" ";
 
+        it = points.insert(it, line.begin(), line.end());
+
         /*for (lit=line.begin(); lit!=line.end(); lit++){
             std::cout<<glm::to_string((*lit).content)<<std::endl;
         }
         std::cout<<std::endl;*/
     }
-    //std::cout<<std::endl;
-    //points.insert(it, vertices_to_draw.begin(), vertices_to_draw.end());
-    return points;
+    std::cout<<"cycle"<<std::endl;
+    std::vector<comVec3> cycle = cycleSearch(points);
+    std::vector<comVec3>::iterator cit = cycle.begin();
+    for (cit=cycle.begin(); cit!=cycle.end(); cit++){
+        std::cout<<glm::to_string((*cit).content)<<std::endl;
+    }
+    return cycle;
 
 }
 
@@ -75,30 +81,39 @@ std::vector<comVec3> cycleSearch( std::vector<comVec3>& lines){
         return lines;
     }
     //2 pts in the lines vector gives an edge
-    int leng = lines.size();
     std::vector<comVec3>::iterator lit;
+
+    std::vector<comVec3> cycles;
 
     std::set<comVec3> vertices;
     vertices.insert(lines.begin(), lines.end());
     
     std::vector<comVec3> v_vertices;
-    std::vector<comVec3>::iterator vit;
-    v_vertices.insert(v_vertices.begin(), vertices.begin(), vertices.end());
+    std::vector<comVec3>::iterator vit = v_vertices.begin();
+    vit = v_vertices.insert(vit, vertices.begin(), vertices.end());
 
     std::vector<int> edges (lines.size(), 0);
 
     for (int j=0; j<(int)v_vertices.size(); j++){
         for (int i=0; i<(int)lines.size(); i++){
-            if (lines[i]==*vit){
+            if (lines[i]==v_vertices[j]){
                 edges[i]=j;
                 //std::cout<<"hello";
             }
         }
     } 
+
+    //cout edges
+    for (int i=0; i<(int)lines.size(); i++){
+        std::cout<<edges[i]<<" "<<glm::to_string(lines[i].content)<<std::endl;
+    }
     
     std::stack<int> stacky;
     std::stack<int> history;
+    std::stack<int> previouses;
     stacky.push(edges[0]);
+    history.push(-1);
+    history.push(edges[0]);
 //DFS
     std::vector<bool> visited(vertices.size(), false);
 
@@ -106,71 +121,156 @@ std::vector<comVec3> cycleSearch( std::vector<comVec3>& lines){
     int current = -1;
 
     while(stacky.size()!=0){
-        int previous = current;
-        int current = stacky.pop();
-        //stacky.push(current);
-        //history.push(current);
+        previous = current;
+        current = stacky.top();
+        stacky.pop();
+
+        //cout stacky and history
+        std::cout<<"stacky: ";
+        std::stack<int> temp;
+        while (stacky.size()!=0){
+            std::cout<<stacky.top();
+            temp.push(stacky.top());
+            stacky.pop();
+        }
+        while (temp.size()!=0){
+            stacky.push(temp.top());
+            temp.pop();
+        }
+        std::cout<<std::endl;
+        std::cout<<"history: ";
+        while (history.size()!=0){
+            std::cout<<history.top();
+            temp.push(history.top());
+            history.pop();
+        }
+        while (temp.size()!=0){
+            history.push(temp.top());
+            temp.pop();
+        }
+        std::cout<<std::endl;
+
         if (visited[current]){
-            std::vector<int> cyc= cyc_found();
+            std::vector<int> cyc= cyc_found(stacky, current, previous);
         }
         else{
             visited[current] = true;
-            if (!adjacent(edges, stacky, history, current, previous)){
-                int i = history.pop();
+            if (!adjacent(edges, stacky, history, previouses, current, previous)){
+                int i = history.top();
+                history.pop();
                 while (i!= -1){
                     visited[i] = false;
-                    i = history.pop();
+                    i = history.top();
+                    history.pop();
+                    previouses.pop();
                 }
             }
         }
-        
     }
-
-
-
-
+        
     return lines;
 }
 
-bool adjacent (std::vector<int>& edges, std::stack<int>& stacky, std::stack<int>& history, int current, int previous){
+bool adjacent (std::vector<int>& edges, std::stack<int>& stacky, std::stack<int>& history, std::stack<int>& previouses,  int current, int previous){
+    std::cout<<"adjacent"<<std::endl;
+    std::cout<<"current: "<<current<<" previous: "<<previous<<std::endl;
     std::vector<int>::iterator ed_it;
-    bool branch = false;
-    for (int i=0; i<edges.size(); i++){
+    bool flag = false;
+    for (int i=0; i<(int)edges.size(); i++){
         if (edges[i]==current){
             if (i%2==0 and edges[i+1]!=previous){
+                std::cout<<i<<": ";
+                std::cout<<edges[i-1]<<" "<<edges[i]<<" '"<<edges[i+1]<<"'"<<std::endl;
                 if (flag){
                     history.push(-1);
+                    previouses.push(current);
                 } 
                 stacky.push(edges[i+1]);
                 history.push(edges[i+1]);
+                previouses.push(current);
                 flag = true;
             }
-            else if (edges[i-1]!=previous){
+            else if (i%2==1 and edges[i-1]!=previous){
+                std::cout<<i<<": ";
+                std::cout<<"'"<<edges[i-1]<<"' "<<edges[i]<<" "<<edges[i+1]<<std::endl;
                 if (flag){
                     history.push(-1);
+   /* */
+                    previouses.push(current);
                 } 
                 stacky.push(edges[i-1]);
                 history.push(edges[i-1]);
+                previouses.push(current);
                 flag = true;
+                std::cout<<edges[i-1]<<" ";
             }
         }
     }
+    std::cout<<std::endl;
     return flag;
 }
 
-std::vector<int> cyc_found (std::stack<int>& stacky, int target){
+std::vector<int> cyc_found (std::stack<int>& stacky, int target, int previous){
     std::vector<int> cyc;
     std::stack<int> temp;
-    
-    int current = stacky.pop();
-    temp.push(current);
-    while (current!=target){
-        cyc.push_back(current);
-        current = stacky.pop();
-        temp.push(current);
+
+    std::cout<<"cyc_found start\n";
+
+    while (stacky.size()!=0){
+        int cur = stacky.top();
+        std::cout<<cur;
+        temp.push(cur);
+        stacky.pop();
     }
+    //std::cout<<"here?";
     while (temp.size()!=0){
-        stacky.push(temp.pop());
+        stacky.push(temp.top());
+        temp.pop();
+    }
+    std::cout<<std::endl;
+    
+
+    int current = stacky.top();
+    stacky.pop();
+    temp.push(current);
+    //cyc.push_back(current);
+    current = stacky.top();
+    stacky.pop();
+    temp.push(current);
+    std::cout<<target<<" "<<previous<<std::endl;
+    while (current!=target || current!=previous){
+        std::cout<<current<<std::endl;
+        if (current == -1){
+            current = stacky.top();
+            stacky.pop();
+            temp.push(current);
+            
+            //std::cout<<current<<std::endl;
+            current = stacky.top();
+            temp.push(current);
+            stacky.pop();
+            
+        }
+        else {
+            cyc.push_back(current);
+            current = stacky.top();
+            stacky.pop();
+            temp.push(current);
+            
+        }
+    }
+    std::cout<<std::endl;
+    while (temp.size()!=0){
+        stacky.push(temp.top());
+        temp.pop();
+    }
+    std::cout<<"cyc_beg \n";
+    for (std::vector<int>::iterator cit=cyc.begin(); cit!=cyc.end(); cit++){
+        std::cout<<*cit<<std::endl;
+    }
+    std::cout<<"cyc_end \n";
+    if ((int)cyc.size()!=0){
+        cyc.insert(cyc.begin(), target);
     }
     return cyc;
 }

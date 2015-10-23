@@ -1,5 +1,6 @@
 #include <vector>
 #include <set>
+#include <stack>
 #include "comvec3.h"
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
@@ -15,7 +16,7 @@ std::vector<comVec3> lin_interpolation_t2l(glm::vec4 a, glm::vec4 b, glm::vec4 c
 std::vector<comVec3> lin_interpolation_c2t(GLuint indices[], GLfloat vertices[], int start, int size, float w);
 
 std::vector<comVec3> cycleSearch( std::vector<comVec3>& lines);
-void adjacent (std::vector<int>& edges, std::stack<int>& stacky, int current){
-std::vector<int> cyc_found (std::stack<int>& stacky, int target){
+bool adjacent (std::vector<int>& edges, std::stack<int>& stacky, std::stack<int>& history, std::stack<int>& previouses, int current, int previous);
+std::vector<int> cyc_found (std::stack<int>& stacky, int target, int previous);
 
 #endif
