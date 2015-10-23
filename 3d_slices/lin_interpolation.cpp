@@ -151,7 +151,16 @@ std::vector<comVec3> cycleSearch( std::vector<comVec3>& lines){
         std::cout<<std::endl;
 
         if (visited[current]){
-            std::vector<int> cyc= cyc_found(stacky, current, previous);
+            std::vector<int> cyc= cyc_found(history, current, previous);
+            int i = history.top();
+            history.pop();
+            while (i!= -1){
+                visited[i] = false;
+                i = history.top();
+                history.pop();
+                previouses.pop();
+            }
+
         }
         else{
             visited[current] = true;
@@ -172,15 +181,15 @@ std::vector<comVec3> cycleSearch( std::vector<comVec3>& lines){
 }
 
 bool adjacent (std::vector<int>& edges, std::stack<int>& stacky, std::stack<int>& history, std::stack<int>& previouses,  int current, int previous){
-    std::cout<<"adjacent"<<std::endl;
-    std::cout<<"current: "<<current<<" previous: "<<previous<<std::endl;
+    //std::cout<<"adjacent"<<std::endl;
+    //std::cout<<"current: "<<current<<" previous: "<<previous<<std::endl;
     std::vector<int>::iterator ed_it;
     bool flag = false;
     for (int i=0; i<(int)edges.size(); i++){
         if (edges[i]==current){
             if (i%2==0 and edges[i+1]!=previous){
-                std::cout<<i<<": ";
-                std::cout<<edges[i-1]<<" "<<edges[i]<<" '"<<edges[i+1]<<"'"<<std::endl;
+                //std::cout<<i<<": ";
+                //std::cout<<edges[i-1]<<" "<<edges[i]<<" '"<<edges[i+1]<<"'"<<std::endl;
                 if (flag){
                     history.push(-1);
                     previouses.push(current);
@@ -191,18 +200,17 @@ bool adjacent (std::vector<int>& edges, std::stack<int>& stacky, std::stack<int>
                 flag = true;
             }
             else if (i%2==1 and edges[i-1]!=previous){
-                std::cout<<i<<": ";
-                std::cout<<"'"<<edges[i-1]<<"' "<<edges[i]<<" "<<edges[i+1]<<std::endl;
+                //std::cout<<i<<": ";
+                //std::cout<<"'"<<edges[i-1]<<"' "<<edges[i]<<" "<<edges[i+1]<<std::endl;
                 if (flag){
                     history.push(-1);
-   /* */
                     previouses.push(current);
                 } 
                 stacky.push(edges[i-1]);
                 history.push(edges[i-1]);
                 previouses.push(current);
                 flag = true;
-                std::cout<<edges[i-1]<<" ";
+                //std::cout<<edges[i-1]<<" ";
             }
         }
     }
@@ -238,8 +246,8 @@ std::vector<int> cyc_found (std::stack<int>& stacky, int target, int previous){
     stacky.pop();
     temp.push(current);
     std::cout<<target<<" "<<previous<<std::endl;
-    while (current!=target || current!=previous){
-        std::cout<<current<<std::endl;
+    while (current!=target){
+        std::cout<<"cur: "<<current<<std::endl;
         if (current == -1){
             current = stacky.top();
             stacky.pop();
@@ -259,19 +267,21 @@ std::vector<int> cyc_found (std::stack<int>& stacky, int target, int previous){
             
         }
     }
+    std::cout<<"done"<<std::endl;
     std::cout<<std::endl;
     while (temp.size()!=0){
         stacky.push(temp.top());
         temp.pop();
     }
+    if ((int)cyc.size()!=0){
+        cyc.insert(cyc.begin(), target);
+    }
+    
     std::cout<<"cyc_beg \n";
     for (std::vector<int>::iterator cit=cyc.begin(); cit!=cyc.end(); cit++){
         std::cout<<*cit<<std::endl;
     }
     std::cout<<"cyc_end \n";
-    if ((int)cyc.size()!=0){
-        cyc.insert(cyc.begin(), target);
-    }
     return cyc;
 }
 
