@@ -243,15 +243,15 @@ int main(){
 
     glfwSetKeyCallback(window, key_callback);
 
-
+    Shader ourShader("shaders/normal.vert", "shaders/normal.frag");
 
     /*glm::vec4 start = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
     glm::vec4 end   = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
     glm::vec3 test  = lin_interpolation(start, end, 0.5);
     std::cout<<test.x<<test.y<<test.z<<std::endl;*/
 
-    std::set<comVec3> vertices_to_draw;
-    std::set<comVec3>::iterator it;
+    //std::set<comVec3> vertices_to_draw;
+    //std::set<comVec3>::iterator it;
     
     /*for (int i=0; i<64; i+=2){
         glm::vec4 startvec = glm::vec4(vertices[lines[i]*4], vertices[lines[i]*4+1], vertices[lines[i]*4+2], vertices[lines[i]*4+3]);
@@ -289,9 +289,9 @@ int main(){
     std::vector<comVec3>::iterator itv=list_ver.begin();
     float w = 0.0;
     
-    for (int i=0; i<108; i+=36){
+    for (int i=0; i<288; i+=36){
         std::vector<comVec3> trigs = lin_interpolation_c2t(indices, vertices, i, 12, w);
-        std::cout<<trigs.size()<<std::endl;
+        //std::cout<<trigs.size()<<std::endl;
         itv=list_ver.insert(itv, trigs.begin(), trigs.end());
     }
 
@@ -300,25 +300,49 @@ int main(){
     for (itv=list_ver.begin(); itv!=list_ver.end(); itv++){
         std::cout<<glm::to_string((*itv).content)<<std::endl;
     }
-    std::cout<<list_ver.size();
+    //std::cout<<list_ver.size()<<std::endl;
+    
+    std::vector<GLfloat> vertices_to_draw;
+    for (itv=list_ver.begin(); itv!=list_ver.end(); itv++){
+        vertices_to_draw.push_back((*itv).content.x);
+        vertices_to_draw.push_back((*itv).content.y);
+        vertices_to_draw.push_back((*itv).content.z);
+    }
+
+
+    GLuint VAO, VBO;
+    glGenVertexArrays(1, &VAO);
+    glGenBuffers(1, &VBO);
+    glBindVertexArray(VAO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, vertices_to_draw.size(), &vertices_to_draw[0], GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
+    glEnableVertexAttribArray(0);  
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
 
     //main loop
-    /*while(!glfwWindowShouldClose(window)) {
+    while(!glfwWindowShouldClose(window)) {
         GLfloat currentFrame = glfwGetTime();
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame; 
 
         glfwPollEvents();
-        glfwSwapBuffers(window);
         
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        
+        ourShader.Use();
+        glBindVertexArray(VAO);
+        glDrawArrays(GL_POLYGON, 0, 8); 
+        glBindVertexArray(0);
 
-    }*/
-    /*
+        glfwSwapBuffers(window);
+    }
+    
     glDeleteVertexArrays(1, &VAO);
     glDeleteBuffers(1, &VBO);
-    glDeleteBuffers(1, &EBO);    */
+    /*glDeleteBuffers(1, &EBO);    */
     glfwTerminate();
     return 0;
 }
